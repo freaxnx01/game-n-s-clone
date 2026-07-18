@@ -19,6 +19,37 @@
   </noscript>
 </head>
 <body>
+<script src="./version.js"></script>
+<script>
+/* Version badge overlay. The bundler replaceWith()s the document root on
+   unpack (see the DOMContentLoaded handler below), which wipes any DOM
+   nodes placed here — but window.GAME_VERSION (set by version.js above)
+   and this closure's setInterval/listeners are attached to window/document,
+   not to a DOM node, so they survive the replacement and can re-create the
+   badge afterward, same fix as game-dustline. */
+(function () {
+  function ensure() {
+    if (document.body && !document.getElementById("version-badge")) {
+      var badge = document.createElement("div");
+      badge.id = "version-badge";
+      badge.title = "Version";
+      badge.style.cssText = "position:fixed;right:8px;bottom:6px;z-index:2147483647;font:600 11px/1 system-ui,-apple-system,sans-serif;color:#8a8f9c;opacity:.5";
+      var link = document.createElement("a");
+      link.href = "https://github.com/freaxnx01/game-n-s-clone/blob/master/CHANGELOG.md";
+      link.target = "_blank";
+      link.rel = "noopener";
+      link.title = "Changelog";
+      link.style.cssText = "color:inherit;text-decoration:none";
+      link.textContent = "v" + (window.GAME_VERSION || "0.0.0");
+      badge.appendChild(link);
+      document.body.appendChild(badge);
+    }
+  }
+  var n = 0, iv = setInterval(function () { ensure(); if (++n > 40) clearInterval(iv); }, 250);
+  document.addEventListener("DOMContentLoaded", ensure);
+  window.addEventListener("load", ensure);
+})();
+</script>
   <div id="__bundler_thumbnail">
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
   <rect width="100" height="100" fill="#4e9b30"></rect>
