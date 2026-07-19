@@ -21,29 +21,72 @@
 <body>
 <script src="./version.js"></script>
 <script>
-/* Version badge overlay. The bundler replaceWith()s the document root on
-   unpack (see the DOMContentLoaded handler below), which wipes any DOM
-   nodes placed here — but window.GAME_VERSION (set by version.js above)
-   and this closure's setInterval/listeners are attached to window/document,
-   not to a DOM node, so they survive the replacement and can re-create the
-   badge afterward, same fix as game-dustline. */
+/* Game-nav + version badge overlay. The bundler replaceWith()s the document
+   root on unpack (see the DOMContentLoaded handler below), which wipes any DOM
+   placed here — including the static #game-nav from the template. This closure's
+   setInterval/listeners are attached to window/document (not a DOM node), so
+   they survive the replacement and re-create the whole nav (links + version
+   badge) afterward. Same self-healing fix as game-dustline / game-plod. */
 (function () {
+  var REPO = "game-n-s-clone", BRANCH = "master";
+  var GH = "https://github.com/freaxnx01/" + REPO;
+  function sep() {
+    var s = document.createElement("span");
+    s.setAttribute("aria-hidden", "true");
+    s.style.cssText = "color:#5a6072";
+    s.textContent = "·";
+    return s;
+  }
+  function extLink(href, text) {
+    var a = document.createElement("a");
+    a.href = href; a.target = "_blank"; a.rel = "noopener";
+    a.style.cssText = "color:#8fd8e8;text-decoration:none";
+    a.textContent = text;
+    return a;
+  }
   function ensure() {
-    if (document.body && !document.getElementById("version-badge")) {
-      var badge = document.createElement("div");
-      badge.id = "version-badge";
-      badge.title = "Version";
-      badge.style.cssText = "position:fixed;right:8px;bottom:6px;z-index:2147483647;font:600 11px/1 system-ui,-apple-system,sans-serif;color:#8a8f9c;opacity:.5";
-      var link = document.createElement("a");
-      link.href = "https://github.com/freaxnx01/game-n-s-clone/blob/master/CHANGELOG.md";
-      link.target = "_blank";
-      link.rel = "noopener";
-      link.title = "Changelog";
-      link.style.cssText = "color:inherit;text-decoration:none";
-      link.textContent = "v" + (window.GAME_VERSION || "0.0.0");
-      badge.appendChild(link);
-      document.body.appendChild(badge);
-    }
+    if (!document.body || document.getElementById("game-nav")) return;
+    var nav = document.createElement("nav");
+    nav.id = "game-nav";
+    nav.setAttribute("aria-label", "Game navigation");
+    nav.style.cssText = "position:fixed;right:10px;bottom:8px;z-index:2147483647;display:flex;gap:12px;align-items:center;font:600 13px/1.4 system-ui,-apple-system,sans-serif;padding:6px 11px;border-radius:8px;background:rgba(15,17,26,.55);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);opacity:.55;transition:opacity .2s";
+    nav.onmouseover = function () { this.style.opacity = 1; };
+    nav.onmouseout = function () { this.style.opacity = 0.55; };
+
+    // version badge → changelog
+    var badge = document.createElement("span");
+    badge.id = "version-badge";
+    badge.title = "Version";
+    badge.style.cssText = "color:#5a6072";
+    var vlink = document.createElement("a");
+    vlink.href = GH + "/blob/" + BRANCH + "/CHANGELOG.md";
+    vlink.target = "_blank"; vlink.rel = "noopener"; vlink.title = "Changelog";
+    vlink.style.cssText = "color:inherit;text-decoration:none";
+    vlink.textContent = "v" + (window.GAME_VERSION || "0.0.0");
+    badge.appendChild(vlink);
+
+    nav.appendChild(badge);
+    nav.appendChild(sep());
+    nav.appendChild(extLink("https://github.freaxnx01.ch/games/", "More Games…"));
+    nav.appendChild(sep());
+    nav.appendChild(extLink(GH, "Source"));
+    nav.appendChild(sep());
+    nav.appendChild(extLink(GH + "/issues/new?title=%5BFeedback%5D%20" + REPO + "&labels=feedback", "Feedback"));
+    nav.appendChild(sep());
+    var star = extLink(GH, "Star");
+    star.className = "github-button";
+    star.setAttribute("data-icon", "octicon-star");
+    star.setAttribute("data-size", "small");
+    star.setAttribute("data-show-count", "true");
+    star.setAttribute("aria-label", "Star freaxnx01/" + REPO + " on GitHub");
+    nav.appendChild(star);
+    document.body.appendChild(nav);
+
+    // (re)load the GitHub buttons script so the star widget renders after unpack
+    var bs = document.createElement("script");
+    bs.src = "https://buttons.github.io/buttons.js";
+    bs.async = true; bs.defer = true; bs.crossOrigin = "anonymous";
+    document.body.appendChild(bs);
   }
   var n = 0, iv = setInterval(function () { ensure(); if (++n > 40) clearInterval(iv); }, 250);
   document.addEventListener("DOMContentLoaded", ensure);
